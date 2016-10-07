@@ -9,7 +9,7 @@ editor="nano"
 #Не обязательно!
 #MySQL
 dbuser="root"
-dbpass="афдсщты"
+dbpass=""
  
 #Проверка существования директории
 if [ ! -d $dir_domain ]
