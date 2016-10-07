@@ -1,0 +1,113 @@
+#!/bin/bash
+ 
+#Каталог где будет создана рабочая директория домена.
+dir_domain="/home/alex/web"
+ 
+#Редактор
+editor="nano"
+ 
+#Не обязательно!
+#MySQL
+dbuser="root"
+dbpass="афдсщты"
+ 
+#Проверка существования директории
+if [ ! -d $dir_domain ]
+then
+ 	echo "Директория $dir_domain не существует!"
+ 	exit 0
+fi
+ 
+ 
+echo "Введите имя домена"
+read domain
+ 
+#Проверка существования домена
+if [ -e /etc/apache2/sites-available/$domain.conf ]
+then
+	echo 'Данный домен уже существует!'
+	exit 0
+fi
+ 
+ 
+#VirtualHost
+touch /etc/apache2/sites-available/$domain.conf
+echo "#$domain
+<VirtualHost *:80>
+	DocumentRoot $dir_domain/$domain/
+	ServerName $domain
+	<Directory $dir_domain/$domain/>
+		Options FollowSymLinks
+		AllowOverride All
+		Order deny,allow
+		deny from all
+		allow from 127.0.0.1
+	</Directory>
+	ErrorLog $dir_domain/log/$domain-error.log
+</VirtualHost>" > /etc/apache2/sites-available/$domain.conf
+ 
+$editor /etc/apache2/sites-available/$domain.conf
+ 
+#Создать рабочий каталог
+mkdir -p $dir_domain/$domain/
+mkdir -p $dir_domain/log/$domain/
+touch $dir_domain/$domain/index.php
+echo "<?php 
+echo __DIR__;" > $dir_domain/$domain/index.php
+ 
+ 
+#Добавить запись в Hosts
+echo "127.0.0.1	$domain www.$domain" >> /etc/hosts
+ 
+#Включить домен
+a2ensite $domain.conf
+echo "*********************"
+echo "Перезапуск Apache ..."
+echo "*********************"
+ 
+#Перезапустить apache
+/etc/init.d/apache2 restart
+ 
+#Сценарий запущен от рута, сделать владельцем того кто запустил.
+chown -R $SUDO_USER:$SUDO_USER $dir_domain/$domain
+
+chown $SUDO_USER:www-data -R $dir_domain/$domain
+
+chmod -R 775 $dir_domain/$domain
+ 
+echo "Создать новую базу данных для $domain (y or n)"
+read createdb
+ 
+if [ $createdb != "y" ]
+then
+        echo "Готово"
+	exit 0
+fi
+ 
+#Создать базу данных
+echo "Введите имя базы данных"
+read udbname
+echo "Введите пароль пользователя"
+read udbpass
+ 
+ 
+ 
+if ! mysql -u$dbuser -p$dbpass --execute="CREATE DATABASE ${udbname};"
+then
+	echo "Невозможно создать базу данных !!!"
+	exit 0
+fi
+ 
+if ! mysql -u$dbuser -p$dbpass --execute="GRANT ALL ON $udbname.* TO ${udbname}@localhost IDENTIFIED BY '${udbpass}';"
+then
+	echo "Невозможно создать пользователя базы данных !!!"
+	exit 0
+fi
+ 
+echo "База данных и пользователь успешно созданы"
+echo "*************************************************"
+echo "Имя базы данных: ${udbname}"
+echo "Имя пользователя: ${udbname}"
+echo "Пароль пользователя: ${udbpass}"
+echo "*************************************************"
+echo "Готово"
