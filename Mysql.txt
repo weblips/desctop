@@ -1,0 +1,254 @@
+первичное поле Primary key - id, можно пара;
+-----------------------------------------------
+
+---------- Нормализация ----------------
+- способ хранения данных оптимальный, безопасный, гибкий
+1.В каждой таблице должен быть первичный ключ.
+2.Записи каждой таблицы не должны повторятся
+3.В одной таблице не должно быть одинаковых полей
+4. Атомарность: таблица не может содержать другую таблицу, она может содержать только конкретное значение из другой таблицы
+5. Наличие внешнего ключа для связывания разных таблиц
+
+--------- Типы связей ---------------------
+1.  1:1 в одной таблице внешних ключей соотв. 0 или 1 другой страницы
+drivers
++----+--------+  
+| id | driver |
++----+--------+
+|  1 | Mike   |
+|  2 | Bob    |
+|  3 | Tod    |
+|  4 | Johnny |
+|  5 | Steve  |
++----+--------+
+cars
++----+------------+-----------+
+| id | car        | driver_id |
++----+------------+-----------+
+|  1 | Ford Focus |         5 |
+|  2 | Kia Ceed   |         3 |
+|  3 | BMW 7      |         4 |
+|  4 | Smart      |         1 |
++----+------------+-----------+
+
+2. 1:М соотв. > 2 записям в другой таблице
+brands
++----+----------+
+| id | brand    |
++----+----------+
+|  1 | BMW      |
+|  2 | Audi     |
+|  3 | Kia      |
+|  4 | Mercedes |
++----+----------+
+
+cars_stock
++----+---------+----------+
+| id | model   | brand_id |
++----+---------+----------+
+|  1 | Ceed    |        3 |
+|  2 | A6      |        2 |
+|  3 | B class |        4 |
+|  4 | A class |        4 |
+|  5 | Q7      |        2 |
++----+---------+----------+
+
+3. М:M 
+student
++----+-------+
+| id | name  |
++----+-------+
+|  1 | Andy  |
+|  2 | John  |
+|  3 | Bob   |
+|  4 | Marie |
++----+-------+
+
+course
++----+--------+
+| id | name   |
++----+--------+
+|  1 | Python |
+|  2 | PHP    |
+|  3 | Ruby   |
+|  4 | C++    |
++----+--------+
+
+student_course
++----+------------+-----------+
+| id | student_id | course_id |
++----+------------+-----------+
+|  1 |          1 |         2 |
+|  2 |          1 |         1 |
+|  3 |          2 |         4 |
+|  4 |          4 |         2 |
+|  5 |          4 |         4 |
++----+------------+-----------+
+
+================ Движки =================================
+
+SHOW ENGINES;
+
+-- InnoDB поддерживает использование внешних ключей и транзакций (он DEFAULT)
+-- MyISAM, но в нем нету поддержки внешних ключей
+
+------------------- ALL ------------------------
+SELECT <поля>
+FROM <таблица (или таблицы)>
+WHERE <критерий>
+GROUP BY <поля для группировки>
+HAVING <условия для групп>
+ORDER BY <поля для сортировки>
+LIMIT <параметры отбора записей>
+
+
+SELECT * FROM student WHERE age < 27 GROUP BY name HAVING avg (AGE) > 22 ORDER BY age DESC LIMIT 3;
+
+-------------- ТИПЫ ДАННЫХ -------------------------------
+
+
+-------------- Create database ---------------------------
+
+CREATE DATABASE my_db CHARACTER SET utf8 COLLATE utf8_general_ci ;
+
+ + Задать кодировку utf8 и сравнение utf8_general_ci
+ 
+ ------------- Create Tables -----------------------------
+ 
+ CREATE TABLE student (
+ id INT AUTO_INCREMENT,
+ name VARCHAR(30),
+ age TINYINT,
+ phone VARCHAR(15),
+ PRIMARY KEY (id)
+)ENGINE = InnoDB;
+
+ -- AUTO_INCREMENT - атрибут, который определяет автоматическую нумерацию записей в указанном поле.
+ -- PRIMARY KEY - задает первичное поле, которое записывается в круглых скобках.
+ -- NULL
+ 
+ ------------------ DESCRIBE ---------------------------------
+ 
+ Получение описания таблицы
+ 
+DESCRIBE tables_tb;
+
+-------------------- DROP удаление базы\таблицы -------------------
+DROP DATABASE my_db ; - удаление базы данных my_db
+DROP TABLE my_table ; - удаление таблицы my_table
+
+------------------- Вставка значений в таблицу INSERT --------------
+
+INSERT INTO student VALUES ( NULL, 'Mike', 25, '345-65-78' ) ;
+
+INSERT INTO student (name, age, phone) VALUES ( 'John', 27, '123-65-12' ), ( 'Bob', 23, '456-12-55' ) ;
+
+id -autoincrement можно пропустить
+
+------------------- Выборка SELECT --------------------------------
+
+SELECT age, name FROM student ;
+
+------------------- WHERE---------------------
+
+SELECT * FROM student WHERE id >= 2 ;
+
+SELECT * FROM student WHERE name = 'John' ;
+
+SELECT * FROM student WHERE id >= 2 AND name = 'John' ;
+
+--------------------- IN, BETWEEN, LIKE -----------------
+
+SELECT * FROM student WHERE name IN('John', 'Bob');
+
+SELECT * FROM student WHERE age BETWEEN 20 AND 25;
+
+SELECT * FROM student WHERE phone LIKE '%6%';
+
+SELECT * FROM student WHERE age NOT BETWEEN 20 AND 25;
+
+--------------------- SELECT DISTINCT -------------------
+
+SELECT DISTINCT name FROM student;
+
+--------------------- AS --------------------------------
+
+SELECT id, name AS student, age, phone AS p_number FROM student;
+
+------------------ GROUP BY ----------------------------
+
+SELECT * FROM student GROUP BY name WHERE id>2;
+
+----------------- Агрегатные функции ------------------
+
+MIN(), MAX() - минимальное максимальное значение
+SUM() - сумма значений
+AVG() - среднее значение
+COUNT() - количество значений
+
+SELECT COUNT(*) as students_count FROM student;
+
+SELECT MIN(age) as min, MAX(age) as max, AVG(age) as avg FROM student;
+
+----------------------HAVING for group -----------------
+
+SELECT name, AVG(age) FROM student GROUP BY name HAVING AVG(age) > 22;
+
+SELECT name, AVG(age) FROM student WHERE age < 27 GROUP BY name HAVING AVG(age) > 22;
+
+---------------------ORDER BY ----------------------------
+
+SELECT * FROM student ORDER BY name DESC, age ASC;
+
+----------------------LIMIT --------------------------------
+
+SELECT * FROM student LIMIT 1; или SELECT * FROM student LIMIT 0, 1;
+
+
+------------------------ UPDATE ----------------------------------------
+
+UPDATE student SET name= 'Debra', phone = '987-65-43' WHERE id = 5;
+
+---------------------- DELETE удаление записей с таблицы -----------------
+
+DELETE FROM student WHERE id = 3;
+
+---------------------- Подзапрос -----------------------------------------
+
+SELECT * FROM student WHERE age > ( SELECT AVG (age) FROM student );
+
+---------------------- ALTER TABLE
+
+ALTER TABLE student ADD test_row VARCHAR (25) DEFAULT 'def_value';
+
+----------------------- Индексы ------------------------
+
+SHOW INDEX FROM таблица;
+
+ALTER TABLE student ADD INDEX(age);
+
+DROP INDEX age ON student;
+
+=================== JOIN
+
+SELECT student.name, `group`.description FROM student JOIN `group` ON student.group_id = `group`.id;
+
+SELECT * FROM student JOIN `group` ON student.group_id = `group`.id;
+
+SELECT student.name, `group`.description
+FROM student RIGHT JOIN `group`
+ON student.group_id = `group`.id;
+
+SELECT student.name, `group`.description
+FROM `group` LEFT JOIN student
+ON student.group_id = `group`.id;
+
+------------------------ UNION служит для объединения таблиц вертикально
+
+SELECT name FROM student
+UNION ALL
+SELECT name FROM teacher;
+
+----------------------- EXPLANE---------------------------------------
+
+EXPLANE SELECT
